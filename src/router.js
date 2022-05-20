@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import * as Posts from './controllers/post_controller';
+// our imports as usual
+import * as UserController from './controllers/user_controller';
+import { requireAuth, requireSignin } from './services/passport';
 
 const router = Router();
 
@@ -13,9 +16,10 @@ router.get('/', (req, res) => {
 
 const handlePostCreate = async (req, res) => {
   const postFields = req.body;
+  console.log(postFields);
   try {
     // use req.body etc to await some contoller function
-    const result = await Posts.createPost(postFields);
+    const result = await Posts.createPost(postFields, req.user);
     // send back the result
     res.json(result);
   } catch (error) {
@@ -80,13 +84,33 @@ const handleDelete = async (req, res) => {
   }
 };
 
+router.post('/signin', requireSignin, async (req, res) => {
+  try {
+    const token = await UserController.signin(req.user);
+    res.json({ token, email: req.user.email });
+  } catch (error) {
+    console.log(error);
+    res.status(422).send({ error: error.toString() });
+  }
+});
+
+router.post('/signup', async (req, res) => {
+  try {
+    const token = await UserController.signup(req.body);
+    res.json({ token, email: req.body.email });
+  } catch (error) {
+    console.log(error);
+    res.status(422).send({ error: error.toString() });
+  }
+});
+
 router.route('/posts')
-  .post(handlePostCreate)
+  .post(requireAuth, handlePostCreate)
   .get(handleGetAllPost);
 
 router.route('/posts/:id')
-  .put(handlePut)
+  .put(requireAuth, handlePut)
   .get(handlePostGet)
-  .delete(handleDelete);
+  .delete(requireAuth, handleDelete);
 
 export default router;

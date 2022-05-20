@@ -1,13 +1,19 @@
 import Post from '../models/post_model';
 
-export async function createPost(postFields) {
+export async function createPost(postFields, user) {
   const newPost = new Post();
   newPost.title = postFields.title;
   newPost.tags = postFields.tags;
   newPost.content = postFields.content;
   newPost.coverUrl = postFields.coverUrl;
+  newPost.author = user._id;
+  // user.populate('userName');
+  // newPost.author = ;
+  // console.log(user.userName);
+  // console.log(user.populate('userName'));
   // await creating a post
   // return post
+  console.log(newPost);
   try {
     const savedpost = await newPost.save();
     return savedpost;
@@ -19,7 +25,8 @@ export async function createPost(postFields) {
 export async function getPosts() {
   // await finding posts
   try {
-    const posts = await Post.find();
+    const posts = await Post.find({}).populate('author');
+    console.log(posts);
     return posts;
   } catch (error) {
     throw new Error(`get posts error: ${error}`);
@@ -30,6 +37,7 @@ export async function getPosts() {
 export async function getPost(id) {
   try {
     const post = await Post.findById(id);
+    console.log(post);
     return post;
   } catch (error) {
     throw new Error(`get post error: ${error}`);
